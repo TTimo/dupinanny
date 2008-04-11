@@ -73,7 +73,7 @@ class FileSystemBackup:
 
     def Setup( self, backup ):
         self.backup = backup
-        print 'FileSystemBackup.Run %s' % repr( ( self.root, self.destination, self.exclude ) )
+        print 'FileSystemBackup.Setup %s' % repr( ( self.root, self.destination, self.exclude ) )
         self.CheckTargetDirectory()
 
         if ( self.backup.full ):
