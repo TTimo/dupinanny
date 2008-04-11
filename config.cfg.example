@@ -1,0 +1,23 @@
+# -*- mode: python -*-
+# example configuration file for dupinanny
+# everything needs to be returned under a single dictionnary 'DupiConfig'
+DupiConfig = {}
+
+config = {
+	'lockfile' : 'lockfile_path',	# where to store the lock file
+        'password' : 'mypass',		# password for PGP
+#	'dry_run'	: True,		# optional, can also use --dry-run on command line
+#	'duplicity' : 'duplicity',	# optional, path to duplicity script
+}
+
+# adding preparation steps - write your own class or use something provided
+# in an array, as many of them:
+#from backup import CheckMount
+#DupiConfig['prepare'] = [ CheckMount( '/mnt/backup' ) ]
+
+DupiConfig['config'] = config
+
+# define your backup class if you need to override it
+# by default the system will instanciate the main class for you
+#from backup import Backup
+#DupiConfig['backup'] = Backup( DupiConfig )
