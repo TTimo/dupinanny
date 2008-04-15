@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, commands, os
+import sys, commands, os, subprocess
 
 import config, lock
 
@@ -81,7 +81,7 @@ class FileSystemBackup:
             if ( ret != 0 ):
                 raise Exception( 'failed to write the full backup flag' )
 
-    def Run( self ):
+    def Run( self, recursed = False ):
 
         # we do it that way so a full backup that fails keeps getting retried until it works
         backup_type = 'incremental'
@@ -96,8 +96,28 @@ class FileSystemBackup:
         cmd = '%s %s --volsize 100 --short-filenames %s--exclude-other-filesystems %s file://%s' % ( self.backup.duplicity, backup_type, exclude_string, self.root, self.destination )
         print cmd
         if ( not self.backup.dry_run ):
-            ret = os.system( cmd )
+            p = subprocess.Popen( cmd, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True )
+            # p.communicate is nice, but I want to print output as we go
+            failed_incremental = False
+            ret = None
+            while ( ret is None ):
+                out = p.stdout.read()
+                if ( len( out ) != 0 ):
+                    sys.stdout.write( out )
+                    if ( out.find( 'Old signatures not found and incremental specified' ) != -1 ):
+                        failed_incremental = True
+                ret = p.poll()
+                print repr( ret )
             if ( ret != 0 ):
+                if ( failed_incremental ):
+                    print 'no incremental found, forcing full backup'
+                    if ( recursed ):
+                        raise Exception( 'already recursed while forcing full backup' )
+                    ret = os.system( 'touch "%s"' % os.path.join( self.destination, 'full' ) )
+                    if ( ret != 0 ):
+                        raise Exception( 'failed to write the full backup flag' )
+                    self.Run( recursed = True )
+                    return
                 raise Exception( 'backup failed' )
 
         # clear the full flag if needed
