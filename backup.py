@@ -57,27 +57,32 @@ class CheckMount:
             if ( status != 0 ):
                 raise Exception( 'CheckMount: %s is not mounted' % self.directory )
 
-class FileSystemBackup:
-    def __init__( self, root, destination, exclude = [] ):
+class BackupTarget:
+    def __init__( self, root, destination, exclude = [], shortFilenames = False ):
         self.root = root
         self.destination = destination
         self.exclude = exclude
         self.backup = None
+        self.shortFilenames = shortFilenames
+        self.fullFileFlag = os.path.normpath( '%s.full' % root.replace( '/', '_' ) )
 
     def CheckTargetDirectory( self ):
-        if ( not os.path.exists( self.destination ) ):
-            print 'create backup directory %s' % self.destination
-            os.makedirs( self.destination )
-        else:
-            assert( os.path.isdir( self.destination ) )
+        # was relevant to local filesystem backup
+        # TODO: this needs done over rsync as well
+#        if ( not os.path.exists( self.destination ) ):
+#            print 'create backup directory %s' % self.destination
+#            os.makedirs( self.destination )
+#        else:
+#            assert( os.path.isdir( self.destination ) )
+        pass
 
     def Setup( self, backup ):
         self.backup = backup
-        print 'FileSystemBackup.Setup %s' % repr( ( self.root, self.destination, self.exclude ) )
+        print 'BackupTarget.Setup %s' % repr( ( self.root, self.destination, self.exclude ) )
         self.CheckTargetDirectory()
 
         if ( self.backup.full ):
-            ret = os.system( 'touch "%s"' % os.path.join( self.destination, 'full' ) )
+            ret = os.system( 'touch "%s"' % self.fullFileFlag )
             if ( ret != 0 ):
                 raise Exception( 'failed to write the full backup flag' )
 
@@ -85,15 +90,17 @@ class FileSystemBackup:
 
         # we do it that way so a full backup that fails keeps getting retried until it works
         backup_type = 'incremental'
-        if ( os.path.exists( os.path.join( self.destination, 'full' ) ) ):
+        if ( os.path.exists( self.fullFileFlag ) ):
             backup_type = 'full'
 
         os.environ['PASSPHRASE'] = self.backup.config['password']
 
-        exclude_string = ''
+        option_string = ''
         for e in self.exclude:
-            exclude_string += '--exclude "%s" ' % e
-        cmd = '%s %s --volsize 100 --short-filenames %s--exclude-other-filesystems %s file://%s' % ( self.backup.duplicity, backup_type, exclude_string, self.root, self.destination )
+            option_string += '--exclude "%s" ' % e
+        if ( self.shortFilenames ):
+            option_string += '--short-filenames '
+        cmd = '%s %s --volsize 100 %s--exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, self.root, self.destination )
         print cmd
         if ( not self.backup.dry_run ):
             p = subprocess.Popen( cmd, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True )
@@ -113,7 +120,7 @@ class FileSystemBackup:
                     print 'no incremental found, forcing full backup'
                     if ( recursed ):
                         raise Exception( 'already recursed while forcing full backup' )
-                    ret = os.system( 'touch "%s"' % os.path.join( self.destination, 'full' ) )
+                    ret = os.system( 'touch "%s"' % self.fullFileFlag )
                     if ( ret != 0 ):
                         raise Exception( 'failed to write the full backup flag' )
                     self.Run( recursed = True )
@@ -122,30 +129,35 @@ class FileSystemBackup:
 
         # clear the full flag if needed
         if ( backup_type == 'full' ):
-            os.unlink( os.path.join( self.destination, 'full' ) )
+            os.unlink( self.fullFileFlag )
 
-        cmd = '%s cleanup --short-filenames --force file://%s' % ( self.backup.duplicity, self.destination )
+        option_string = ''
+        if ( self.shortFilenames ):
+            option_string += '--short-filenames '
+
+        cmd = '%s cleanup %s--force %s' % ( self.backup.duplicity, option_string, self.destination )
         print cmd
         if ( not self.backup.dry_run ):
             ret = os.system( cmd )
             if ( ret != 0 ):
-                raise Exception( 'remove-older-than failed' )
+                raise Exception( 'cleanup failed' )
         
-        cmd = '%s remove-older-than 4D --short-filenames --force file://%s' % ( self.backup.duplicity, self.destination )
+        cmd = '%s remove-older-than 4D --force %s%s' % ( self.backup.duplicity, option_string, self.destination )
         print cmd
         if ( not self.backup.dry_run ):
             ret = os.system( cmd )
             if ( ret != 0 ):
                 raise Exception( 'remove-older-than failed' )
-
 
     def Finish( self ):
-        cmd = '%s collection-status --short-filenames file://%s' % ( self.backup.duplicity, self.destination )
+        option_string = ''
+        if ( self.shortFilenames ):
+            option_string += '--short-filenames '
+        cmd = '%s collection-status %s%s' % ( self.backup.duplicity, option_string, self.destination )
         print cmd
         ret = os.system( cmd )
         if ( ret != 0 ):
             raise Exception( 'collection-status failed' )
-
 
 if ( __name__ == '__main__' ):
     import config
