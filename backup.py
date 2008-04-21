@@ -137,7 +137,7 @@ class BackupTarget:
 
         cmd = '%s cleanup %s--force %s' % ( self.backup.duplicity, option_string, self.destination )
         print cmd
-        if ( not self.backup.dry_run ):
+        if ( self.backup.cleanup or not self.backup.dry_run ):
             ret = os.system( cmd )
             if ( ret != 0 ):
                 raise Exception( 'cleanup failed' )
