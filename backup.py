@@ -144,7 +144,7 @@ class BackupTarget:
         
         cmd = '%s remove-older-than 4D --force %s%s' % ( self.backup.duplicity, option_string, self.destination )
         print cmd
-        if ( not self.backup.dry_run ):
+        if ( self.backup.remove_older or not self.backup.dry_run ):
             ret = os.system( cmd )
             if ( ret != 0 ):
                 raise Exception( 'remove-older-than failed' )

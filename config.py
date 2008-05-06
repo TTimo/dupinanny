@@ -32,6 +32,10 @@ class ConfigBase:
         if ( self.cleanup ):
             self.dry_run = True
 
+        self.remove_older = options.remove_older
+        if ( self.remove_older ):
+            self.dry_run = True
+
         if ( self.dry_run ):
             print '*** running in test mode ***'
 
@@ -43,7 +47,8 @@ def readConfig( cmdargs ):
 
     parser = OptionParser()
     parser.add_option( '--dry-run', action = 'store_true', dest = 'dry_run', help = 'show commands, do not execute' )
-    parser.add_option( '--cleanup', action = 'store_true', dest = 'cleanup', help = 'cleanup only, implies --dry-run for all other operations' )
+    parser.add_option( '--cleanup', action = 'store_true', dest = 'cleanup', help = 'cleanup only, implies --dry-run' )
+    parser.add_option( '--remove-older', action = 'store_true', dest = 'remove_older', help = 'remove older backups only, implies --dry-run' )
     parser.add_option( '--config', action = 'store', type = 'string', dest = 'configFile', default = 'config.cfg.example', help = 'use this config file' )
     parser.add_option( '--full', action = 'store_true', dest = 'full', help = 'do a full backup' )
     ( options, args ) = parser.parse_args( cmdargs )
