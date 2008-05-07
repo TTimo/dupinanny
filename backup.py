@@ -141,13 +141,14 @@ class BackupTarget:
             ret = os.system( cmd )
             if ( ret != 0 ):
                 raise Exception( 'cleanup failed' )
-        
-        cmd = '%s remove-older-than 4D --force %s%s' % ( self.backup.duplicity, option_string, self.destination )
-        print cmd
-        if ( self.backup.remove_older or not self.backup.dry_run ):
-            ret = os.system( cmd )
-            if ( ret != 0 ):
-                raise Exception( 'remove-older-than failed' )
+
+        if ( self.backup.remove_older != 0 ):
+            cmd = '%s remove-older-than %dD --force %s%s' % ( self.backup.duplicity, self.backup.remove_older, option_string, self.destination )
+            print cmd
+            if ( self.backup.force_remove_older or not self.backup.dry_run ):
+                ret = os.system( cmd )
+                if ( ret != 0 ):
+                    raise Exception( 'remove-older-than failed' )
 
     def Finish( self ):
         option_string = ''

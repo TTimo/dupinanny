@@ -8,6 +8,7 @@ config = {
         'password' : 'mypass',		# password for PGP
 #	'dry_run'	: True,		# optional, can also use --dry-run on command line
 #	'duplicity' : 'duplicity',	# optional, path to duplicity script
+#       'remove_older' : 4,		# optional, remove backups older than n days (4 by default, set to 0 to disable)
 }
 
 # adding preparation steps - write your own class or use something provided
