@@ -79,12 +79,18 @@ class BackupTarget:
     def Setup( self, backup ):
         self.backup = backup
         print 'BackupTarget.Setup %s' % repr( ( self.root, self.destination, self.exclude ) )
-        self.CheckTargetDirectory()
+        self.CheckTargetDirectory()	
 
         if ( self.backup.full ):
             ret = os.system( 'touch "%s"' % self.fullFileFlag )
             if ( ret != 0 ):
                 raise Exception( 'failed to write the full backup flag' )
+
+        if ( os.path.exists( self.fullFileFlag ) ):
+            full = 'full backup enabled'
+        else:
+            full = 'not present'	
+        print 'full backup indicator file: %s - %s' % ( repr( self.fullFileFlag ), full )
 
     def Run( self, recursed = False ):
 
@@ -127,9 +133,9 @@ class BackupTarget:
                     return
                 raise Exception( 'backup failed' )
 
-        # clear the full flag if needed
-        if ( backup_type == 'full' ):
-            os.unlink( self.fullFileFlag )
+	    # clear the full flag if needed
+            if ( backup_type == 'full' ):
+                os.unlink( self.fullFileFlag )
 
         option_string = ''
         if ( self.shortFilenames ):
