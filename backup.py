@@ -106,7 +106,7 @@ class BackupTarget:
             option_string += '--exclude "%s" ' % e
         if ( self.shortFilenames ):
             option_string += '--short-filenames '
-        cmd = '%s %s --volsize 100 %s--exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, self.root, self.destination )
+        cmd = '%s %s --asynchronous-upload --volsize 100 %s--exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, self.root, self.destination )
         print cmd
         if ( not self.backup.dry_run ):
             p = subprocess.Popen( cmd, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True )
