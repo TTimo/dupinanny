@@ -121,7 +121,7 @@ class BackupTarget:
         exclude_tmp = ''
         if ( self.root == '/' ):
             exclude_tmp = '--exclude /tmp'
-        cmd = '%s %s --volsize 100 %s %s --exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, exclude_tmp, self.root, self.destination )
+        cmd = '%s %s --asynchronous-upload --volsize 100 %s %s --exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, exclude_tmp, self.root, self.destination )
         print cmd
         if ( not self.backup.dry_run ):
             p = subprocess.Popen( cmd, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True )
