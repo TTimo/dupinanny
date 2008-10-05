@@ -116,8 +116,12 @@ class BackupTarget:
             option_string += '--exclude "%s" ' % e
         if ( self.shortFilenames ):
             option_string += '--short-filenames '
-        # TMP hardcode excluding /tmp to avoid a bad recursion problem in 5.0.2
-        cmd = '%s %s --volsize 100 %s--exclude /tmp --exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, self.root, self.destination )
+        # TMP avoid a bad recursion problem in 5.0.2 - make sure to always skip /tmp
+        # and .. duplicity doesn't like getting /tmp when it's not in the root
+        exclude_tmp = ''
+        if ( self.root == '/' ):
+            exclude_tmp = '--exclude /tmp'
+        cmd = '%s %s --volsize 100 %s %s --exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, exclude_tmp, self.root, self.destination )
         print cmd
         if ( not self.backup.dry_run ):
             p = subprocess.Popen( cmd, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True )
