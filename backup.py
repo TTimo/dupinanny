@@ -22,16 +22,26 @@ class Backup( config.ConfigBase ):
         if ( not self.dupi.has_key( 'items' ) ):
             raise Exception( 'no backups defined (\'items\' entry in the DupiConfig dictionary)' )
 
-        # setup all 3 first so we can flag 'full backup'
+        # setup first so we can flag 'full backup'
         # and do the cleanup and status summary at the end too
+
+        print '###########################################################################'
+        print 'setup'
+        print '###########################################################################'
         
         for b in self.dupi['items']:
             b.Setup( self )
             
         for b in self.dupi['items']:
+            print '###########################################################################'
+            print 'run %s' % b.root
+            print '###########################################################################'
             b.Run()
 
         for b in self.dupi['items']:
+            print '###########################################################################'
+            print 'finish %s' % b.root
+            print '###########################################################################'
             b.Finish()        
 
     def Run( self ):
@@ -106,11 +116,13 @@ class BackupTarget:
             option_string += '--exclude "%s" ' % e
         if ( self.shortFilenames ):
             option_string += '--short-filenames '
-        cmd = '%s %s --asynchronous-upload --volsize 100 %s--exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, self.root, self.destination )
+        # TMP hardcode excluding /tmp to avoid a bad recursion problem in 5.0.2
+        cmd = '%s %s --volsize 100 %s--exclude /tmp --exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, self.root, self.destination )
         print cmd
         if ( not self.backup.dry_run ):
             p = subprocess.Popen( cmd, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True )
             # p.communicate is nice, but I want to print output as we go
+            # NOTE: using a tee class would be a better way to do this clearly
             failed_incremental = False
             ret = None
             while ( ret is None ):
