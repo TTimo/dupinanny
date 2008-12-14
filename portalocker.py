@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # portalocker.py - Cross-platform (posix/nt) API for flock-style file locking.
 #                  Requires python 1.5.2 or better.
+# See http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/65203/index_txt
+# Except where otherwise noted, recipes in the Python Cookbook are 
+# published under the Python license.
 
 """Cross-platform (posix/nt) API for flock-style file locking.
 

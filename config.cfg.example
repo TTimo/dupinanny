@@ -1,24 +1,53 @@
 # -*- mode: python -*-
-# example configuration file for dupinanny
-# everything needs to be returned under a single dictionnary 'DupiConfig'
+
+# example configuration file for dupinanny:
+# this is evaluated as python code.
+# you can import modules, declare classes, do all the usual python things
+# dupinnany will work from the 'DupiConfig' dictionary you setup
+
 DupiConfig = {}
 
+#########################################
+# general options:
+#########################################
+
 config = {
-	'lockfile' : 'lockfile_path',	# where to store the lock file
-        'password' : 'mypass',		# password for PGP
-#	'dry_run'	: True,		# optional, can also use --dry-run on command line
-#	'duplicity' : 'duplicity',	# optional, path to duplicity script
-#       'remove_older' : 4,		# optional, remove backups older than n days (4 by default, set to 0 to disable)
+    'lockfile' : 'lockfile_path',	# where to store the lock/pid file
+    'password' : 'mypass',		# password for PGP
+#    'dry_run'	: True,			# optional, can also use --dry-run on command line
+#    'duplicity' : 'duplicity',		# optional, path to duplicity script
+#    'remove_older' : 4,		# optional, remove backups older than n days (4 by default, set to 0 to disable)
 }
 
-# adding preparation steps - write your own class or use something provided
-# in an array, as many of them:
-#from backup import CheckMount
-#DupiConfig['prepare'] = [ CheckMount( '/mnt/backup' ) ]
+#########################################
+# backup targets:
+#########################################
 
-DupiConfig['config'] = config
+# this shows how to breakdown a backup over rsync into multiple independent pieces
+# we also show how to exclude some paths
+
+destination_root = 'rsync://@my_host::my_backup_path'
+
+from backup import BackupTarget
+DupiConfig['items'] = [
+    BackupTarget( root = '/', destination = destination_root, exclude = [ '/usr/local/games' ], shortFilenames = True ),
+    # (dupinanny calls duplicity with --exclude-other-filesystems, so you may need to add more)
+    BackupTarget( root = '/var', destination = '%s/var' % destination_root, shortFilenames = True ),
+    ]
+
+#########################################
+# optional stuff:
+#########################################
 
 # define your backup class if you need to override it
 # by default the system will instanciate the main class for you
 #from backup import Backup
 #DupiConfig['backup'] = Backup( DupiConfig )
+
+# adding pre-backup steps - write your own class, or use some of the provided utilities
+# for instance, this checks that a particular filesystem is mounted
+#from backup import CheckMount
+#DupiConfig['prepare'] = [ CheckMount( '/mnt/backup' ) ]
+
+DupiConfig['config'] = config
+

@@ -1,6 +1,0 @@
-support --volsize setting
-
-support cleanup parameters config
-
-CheckTargetDirectory needs implemented with the rsync backend
-means reworking how we define backend type etc.
