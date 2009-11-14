@@ -67,7 +67,7 @@ class Backup( config.ConfigBase ):
         self.Prepare()
         self.ProcessBackups()
 
-class CheckMount:
+class CheckMount( object ):
     def __init__( self, directory ):
         self.directory = directory
                   
@@ -85,7 +85,7 @@ class CheckMount:
             if ( status != 0 ):
                 raise Exception( 'CheckMount: %s is not mounted' % self.directory )
 
-class BackupTarget:
+class BackupTarget( object ):
     def __init__( self, root, destination, exclude = [], shortFilenames = False ):
         self.root = root
         self.destination = destination
@@ -94,20 +94,9 @@ class BackupTarget:
         self.shortFilenames = shortFilenames
         self.fullFileFlag = os.path.normpath( '%s.full' % root.replace( '/', '_' ) )
 
-    def CheckTargetDirectory( self ):
-        # was relevant to local filesystem backup
-        # TODO: this needs done over rsync as well
-#        if ( not os.path.exists( self.destination ) ):
-#            print 'create backup directory %s' % self.destination
-#            os.makedirs( self.destination )
-#        else:
-#            assert( os.path.isdir( self.destination ) )
-        pass
-
     def Setup( self, backup ):
         self.backup = backup
         print 'BackupTarget.Setup %s' % repr( ( self.root, self.destination, self.exclude ) )
-        self.CheckTargetDirectory()	
 
         if ( self.backup.full ):
             ret = os.system( 'touch "%s"' % self.fullFileFlag )
@@ -134,8 +123,9 @@ class BackupTarget:
             option_string += '--exclude "%s" ' % e
         if ( self.shortFilenames ):
             option_string += '--short-filenames '
-        # TMP avoid a bad recursion problem in 5.0.2 - make sure to always skip /tmp
+        # avoid a bad recursion problem in 5.0.2 - make sure to always skip /tmp
         # and .. duplicity doesn't like getting /tmp when it's not in the root
+        # haven't checked if this is still needed in newer versions
         exclude_tmp = ''
         if ( self.root == '/' ):
             exclude_tmp = '--exclude /tmp'
@@ -199,6 +189,35 @@ class BackupTarget:
         ret = os.system( cmd )
         if ( ret != 0 ):
             raise Exception( 'collection-status failed' )
+
+class LVMBackupTarget( BackupTarget ):
+    def __init__( self, root, destination, lvmpath, snapsize, snapshot_name, snapshot_path, exclude = [], shortFilenames = False ):
+        BackupTarget.__init__( self, root, destination, exclude = exclude, shortFilenames = shortFilenames )
+        self.lvmpath = lvmpath
+        self.snapsize = snapsize
+        self.snapshot_name = snapshot_name
+        self.snapshot_path = snapshot_path
+
+    def Run( self, recursed = False ):
+        # create snapshot
+        if ( not recursed ): # only done once at top level, recursed is the path for 'try again with a full backup'
+            cmd = [ 'lvcreate', '-s', '-L', self.snapsize, '-n', self.snapshot_name, self.lvmpath ]
+            print cmd
+            subprocess.check_call( cmd )
+            cmd = [ 'mount', '-t', 'auto', self.snapshot_path, self.root ]
+            print cmd
+            subprocess.check_call( cmd )
+        try:
+            BackupTarget.Run( self, recursed = recursed )
+        finally:
+            if ( not recursed ): # only done once at top level, recursed is the path for 'try again with a full backup'            
+                # release snapshot - making sure to do that in a cleanup handler so we release the snap no matter what
+                cmd = [ 'umount', self.root ]
+                print cmd
+                subprocess.check_call( cmd )
+                cmd = [ 'lvremove', '-f', self.snapshot_path ]
+                print cmd
+                subprocess.check_call( cmd )
 
 if ( __name__ == '__main__' ):
     import config

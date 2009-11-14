@@ -36,6 +36,18 @@ DupiConfig['items'] = [
     ]
 
 #########################################
+# LVM support (EXPERIMENTAL):
+#########################################
+
+# if you use LVM, you can use LVM snapshots to make sure you're backing up a consistent image
+# use LVMBackupTarget for that purpose, you need a path to mount the snapshot to, and that's what you use as the root of the backup
+# you also need to pass the name of the snapshot LVM volume that is created, the LVM path for it, and it's size
+
+DupiConfig['items'].append(
+    LVMBackupTarget( root = '/mnt/dupinanny', destination = 'rsync://@my_host::my_lvm_backup_path', lvmpath = '/dev/lvmvolume/volumename', snapsize = '20G', snapshot_name = 'dupinanny', snapshot_path = '/dev/lvmvolume/dupinanny' )
+    )
+
+#########################################
 # optional stuff:
 #########################################
 
