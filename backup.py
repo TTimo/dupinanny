@@ -197,6 +197,8 @@ class LVMBackupTarget( BackupTarget ):
         self.snapsize = snapsize
         self.snapshot_name = snapshot_name
         self.snapshot_path = snapshot_path
+        # otherwrite the parent class's name to avoid collisions
+        self.fullFileFlag = os.path.normpath( '%s.full' % lvmpath.replace( '/', '_' ) )
 
     def Run( self, recursed = False ):
         # create snapshot
