@@ -161,7 +161,7 @@ class BackupTarget( object ):
             if ( backup_type == 'full' ):
                 os.unlink( self.fullFileFlag )
 
-        option_string = ''
+        option_string = '--extra-clean '
         if ( self.shortFilenames ):
             option_string += '--short-filenames '
 
