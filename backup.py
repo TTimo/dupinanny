@@ -123,14 +123,32 @@ class BackupTarget( object ):
             option_string += '--exclude "%s" ' % e
         if ( self.shortFilenames ):
             option_string += '--short-filenames '
-        # avoid a bad recursion problem in 5.0.2 - make sure to always skip /tmp
-        # and .. duplicity doesn't like getting /tmp when it's not in the root
-        # haven't checked if this is still needed in newer versions
-        exclude_tmp = ''
-        if ( self.root == '/' ):
-            exclude_tmp = '--exclude /tmp'
-        cmd = '%s %s --asynchronous-upload --volsize 100 %s %s --exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, exclude_tmp, self.root, self.destination )
+        if ( self.backup.config.has_key('duplicity_args') ):
+            for i in self.backup.config['duplicity_args']:
+                option_string += '%s ' % i
+
+        tempdir = '/tmp'
+        try:
+            tempdir = os.environ['TEMP']
+        except:
+            pass
+        if ( self.backup.config.has_key('tempdir') ):
+            tempdir = self.backup.config['tempdir']
+            # need to make it explicit then
+            option_string += '--tempdir \'%s\' ' % tempdir
+
+        # avoid a bad recursion problem in 5.0.2 - make sure to skip the tempdir
+        # I don't know if this has been fixed in newer releases of duplicity, would be worth checking
+        # additional difficulty: can only do this if the directory is actually in the path
+        if ( tempdir.find( self.root ) != -1 ):
+            if ( tempdir is None ):
+                option_string += '--exclude /tmp '
+            else:
+                option_string += '--exclude \'%s\' ' % tempdir 
+
+        cmd = '%s %s --asynchronous-upload --volsize 100 %s --exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, self.root, self.destination )
         print cmd
+
         if ( not self.backup.dry_run ):
             p = subprocess.Popen( cmd, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True )
             # p.communicate is nice, but I want to print output as we go
@@ -164,6 +182,9 @@ class BackupTarget( object ):
         option_string = '--extra-clean '
         if ( self.shortFilenames ):
             option_string += '--short-filenames '
+        if ( self.backup.config.has_key('duplicity_args') ):
+            for i in self.backup.config['duplicity_args']:
+                option_string += '%s ' % i
 
         cmd = '%s cleanup %s--force %s' % ( self.backup.duplicity, option_string, self.destination )
         print cmd
@@ -184,6 +205,9 @@ class BackupTarget( object ):
         option_string = ''
         if ( self.shortFilenames ):
             option_string += '--short-filenames '
+        if ( self.backup.config.has_key('duplicity_args') ):
+            for i in self.backup.config['duplicity_args']:
+                option_string += '%s ' % i
         cmd = '%s collection-status %s%s' % ( self.backup.duplicity, option_string, self.destination )
         print cmd
         ret = os.system( cmd )

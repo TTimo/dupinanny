@@ -17,6 +17,8 @@ config = {
 #    'dry_run'	: True,			# optional, can also use --dry-run on command line
 #    'duplicity' : 'duplicity',		# optional, path to duplicity script
 #    'remove_older' : 4,		# optional, remove backups older than n days (4 by default, set to 0 to disable)
+#    'tempdir' : '/alternate/tmp',      # optional, alternate temporary storage directory
+#    'duplicity_args' : [ '--s3-use-new-style' ],	# optional, extra arguments to use when calling duplicity (this example in particular may be needed when using S3)
 }
 
 #########################################
@@ -27,6 +29,10 @@ config = {
 # we also show how to exclude some paths
 
 destination_root = 'rsync://@my_host::my_backup_path'
+
+# S3 NOTE - use the following:
+# destination_root = 's3+http://my_bucket_name'
+# don't use --s3-use-new-style
 
 from backup import BackupTarget
 DupiConfig['items'] = [
