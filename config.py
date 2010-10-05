@@ -77,7 +77,7 @@ def readConfig( cmdargs ):
     parser.add_option( '--cleanup', action = 'store_true', dest = 'cleanup', help = 'cleanup only, implies --dry-run' )
     parser.add_option( '--remove-older', action = 'store', type = 'int', dest = 'remove_older', default = None, help = 'run remove_old only, with the given value. implies --dry-run (set the value in the config to customize for each run and do other operations)' )
     parser.add_option( '--config', action = 'store', type = 'string', dest = 'configFile', default = 'config.cfg.example', help = 'use this config file' )
-    parser.add_option( '--full', action = 'store_true', dest = 'full', help = 'do a full backup' )
+    parser.add_option( '--full', action = 'store_true', dest = 'full', help = 'force a full backup. will retry for each backup target if necessary until full backups are done' )
     ( options, args ) = parser.parse_args( cmdargs )
     
     globals = {}

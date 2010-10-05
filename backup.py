@@ -99,9 +99,7 @@ class BackupTarget( object ):
         print 'BackupTarget.Setup %s' % repr( ( self.root, self.destination, self.exclude ) )
 
         if ( self.backup.full ):
-            ret = os.system( 'touch "%s"' % self.fullFileFlag )
-            if ( ret != 0 ):
-                raise Exception( 'failed to write the full backup flag' )
+            subprocess.check_call( [ 'touch', self.fullFileFlag ] )
 
         if ( os.path.exists( self.fullFileFlag ) ):
             full = 'full backup enabled'
@@ -118,14 +116,13 @@ class BackupTarget( object ):
 
         os.environ['PASSPHRASE'] = self.backup.config['password']
 
-        option_string = ''
+        option_string = []
         for e in self.exclude:
-            option_string += '--exclude "%s" ' % e
+            option_string += [ '--exclude', e ]
         if ( self.shortFilenames ):
-            option_string += '--short-filenames '
+            option_string.append( '--short-filenames' )
         if ( self.backup.config.has_key('duplicity_args') ):
-            for i in self.backup.config['duplicity_args']:
-                option_string += '%s ' % i
+            option_string += self.backup.config['duplicity_args']
 
         tempdir = '/tmp'
         try:
@@ -135,22 +132,25 @@ class BackupTarget( object ):
         if ( self.backup.config.has_key('tempdir') ):
             tempdir = self.backup.config['tempdir']
             # need to make it explicit then
-            option_string += '--tempdir \'%s\' ' % tempdir
+            option_string += [ '--tempdir', tempdir ]
 
         # avoid a bad recursion problem in 5.0.2 - make sure to skip the tempdir
         # I don't know if this has been fixed in newer releases of duplicity, would be worth checking
         # additional difficulty: can only do this if the directory is actually in the path
         if ( tempdir.find( self.root ) != -1 ):
             if ( tempdir is None ):
-                option_string += '--exclude /tmp '
+                option_string += [ '--exclude', '/tmp' ]
             else:
-                option_string += '--exclude \'%s\' ' % tempdir 
+                option_string += [ '--exclude', tempdir ]
 
-        cmd = '%s %s --asynchronous-upload --volsize 100 %s --exclude-other-filesystems %s %s' % ( self.backup.duplicity, backup_type, option_string, self.root, self.destination )
-        print cmd
+        cmd = [ self.backup.duplicity, backup_type, '--asynchronous-upload' ]
+        cmd += option_string
+        cmd.append( self.root )
+        cmd.append( self.destination )
+        print repr( cmd )
 
         if ( not self.backup.dry_run ):
-            p = subprocess.Popen( cmd, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True )
+            p = subprocess.Popen( cmd, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = False )
             # p.communicate is nice, but I want to print output as we go
             # NOTE: using a tee class would be a better way to do this clearly
             failed_incremental = False
@@ -168,9 +168,7 @@ class BackupTarget( object ):
                     print 'no incremental found, forcing full backup'
                     if ( recursed ):
                         raise Exception( 'already recursed while forcing full backup' )
-                    ret = os.system( 'touch "%s"' % self.fullFileFlag )
-                    if ( ret != 0 ):
-                        raise Exception( 'failed to write the full backup flag' )
+                    subprocess.check_call( [ 'touch', self.fullFileFlag ] )
                     self.Run( recursed = True )
                     return
                 raise Exception( 'backup failed' )
@@ -179,40 +177,39 @@ class BackupTarget( object ):
             if ( backup_type == 'full' ):
                 os.unlink( self.fullFileFlag )
 
-        option_string = '--extra-clean '
+        option_string = [ '--extra-clean' ]
         if ( self.shortFilenames ):
-            option_string += '--short-filenames '
+            option_string.append( '--short-filenames' )
         if ( self.backup.config.has_key('duplicity_args') ):
-            for i in self.backup.config['duplicity_args']:
-                option_string += '%s ' % i
+            option_string += self.backup.config['duplicity_args']
 
-        cmd = '%s cleanup %s--force %s' % ( self.backup.duplicity, option_string, self.destination )
-        print cmd
+        cmd = [ self.backup.duplicity, 'cleanup' ]
+        cmd += option_string
+        cmd.append( '--force' )
+        cmd.append( self.destination )
+        print( repr( cmd ) )
         if ( self.backup.cleanup or not self.backup.dry_run ):
-            ret = os.system( cmd )
-            if ( ret != 0 ):
-                raise Exception( 'cleanup failed' )
+            subprocess.check_call( cmd )
 
         if ( self.backup.remove_older != 0 ):
-            cmd = '%s remove-older-than %dD --force %s%s' % ( self.backup.duplicity, self.backup.remove_older, option_string, self.destination )
-            print cmd
+            cmd = [ self.backup.duplicity, 'remove-older-than', '%dD' % self.backup.remove_older, '--force' ]
+            cmd += option_string
+            cmd.append( self.destination )
+            print( repr( cmd ) )
             if ( self.backup.force_remove_older or not self.backup.dry_run ):
-                ret = os.system( cmd )
-                if ( ret != 0 ):
-                    raise Exception( 'remove-older-than failed' )
+                subprocess.check_call( cmd )
 
     def Finish( self ):
-        option_string = ''
+        option_string = []
         if ( self.shortFilenames ):
-            option_string += '--short-filenames '
+            option_string.append( '--short-filenames' )
         if ( self.backup.config.has_key('duplicity_args') ):
-            for i in self.backup.config['duplicity_args']:
-                option_string += '%s ' % i
-        cmd = '%s collection-status %s%s' % ( self.backup.duplicity, option_string, self.destination )
-        print cmd
-        ret = os.system( cmd )
-        if ( ret != 0 ):
-            raise Exception( 'collection-status failed' )
+            option_string += self.backup.config['duplicity_args']
+        cmd = [ self.backup.duplicity, 'collection-status' ]
+        cmd += option_string
+        cmd.append( self.destination )
+        print( repr( cmd ) )
+        subprocess.check_call( cmd )
 
 class LVMBackupTarget( BackupTarget ):
     def __init__( self, root, destination, lvmpath, snapsize, snapshot_name, snapshot_path, exclude = [], shortFilenames = False ):
