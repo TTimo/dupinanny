@@ -118,7 +118,7 @@ class BackupTarget( object ):
 
         option_string = []
         for e in self.exclude:
-            option_string += [ '--exclude', e ]
+            option_string.append( '--exclude=%s' % e )
         if ( self.shortFilenames ):
             option_string.append( '--short-filenames' )
         if ( self.backup.config.has_key('duplicity_args') ):
@@ -139,9 +139,9 @@ class BackupTarget( object ):
         # additional difficulty: can only do this if the directory is actually in the path
         if ( tempdir.find( self.root ) != -1 ):
             if ( tempdir is None ):
-                option_string += [ '--exclude', '/tmp' ]
+                option_string.append( '--exclude=/tmp' )
             else:
-                option_string += [ '--exclude', tempdir ]
+                option_string.append( '--exclude=%s' % tempdir )
 
         cmd = [ self.backup.duplicity, backup_type, '--asynchronous-upload' ]
         cmd += option_string
