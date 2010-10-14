@@ -18,7 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
 
-import sys, commands, os, subprocess
+import sys, commands, os, subprocess, pickle, datetime
 
 import config, lock
 
@@ -37,6 +37,17 @@ class Backup( config.ConfigBase ):
                 p.Prepare( self )
 
     def ProcessBackups( self ):
+        backup_time_filename = os.path.join( os.path.dirname( self.lockfile ), 'dupinnany_backup_info.pickle' )
+        if ( self.config.has_key( 'backup_every' ) and os.path.exists( backup_time_filename ) ):
+            # check last backup information, early out if we haven't reached that point yet
+            backup_time_file = file( backup_time_filename )
+            last_backup = pickle.load( backup_time_file )
+            backup_time_file.close()
+            delta = datetime.datetime.now() - last_backup
+            if ( delta.days < self.config['backup_every'] ):
+                print( 'Last backup is %d days old, no new backup needed.' % delta.days )
+                return
+
         if ( not self.dupi.has_key( 'items' ) ):
             raise Exception( 'no backups defined (\'items\' entry in the DupiConfig dictionary)' )
 
@@ -60,7 +71,14 @@ class Backup( config.ConfigBase ):
             print '###########################################################################'
             print 'finish %s' % b.root
             print '###########################################################################'
-            b.Finish()        
+            b.Finish()
+
+        if ( not self.dry_run ):
+            # write out a global flag to mark the time of the last successful backup run
+            # place this in the same folder as the pid file
+            backup_time_file = file( backup_time_filename, 'w' )
+            pickle.dump( datetime.datetime.now(), backup_time_file )
+            backup_time_file.close()
 
     def Run( self ):
         self.AcquireLock()
@@ -114,7 +132,8 @@ class BackupTarget( object ):
         if ( os.path.exists( self.fullFileFlag ) ):
             backup_type = 'full'
 
-        os.environ['PASSPHRASE'] = self.backup.config['password']
+        if ( self.backup.config.has_key( 'password' ) ):
+            os.environ['PASSPHRASE'] = self.backup.config['password']
 
         option_string = []
         for e in self.exclude:

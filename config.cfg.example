@@ -13,9 +13,10 @@ DupiConfig = {}
 
 config = {
     'lockfile' : 'lockfile_path',	# where to store the lock/pid file
-    'password' : 'mypass',		# password for PGP
+    'password' : 'mypass',		# password for PGP (use --no-encryption in duplicity_args if you do not wish to encrypt)
 #    'dry_run'	: True,			# optional, can also use --dry-run on command line
 #    'duplicity' : 'duplicity',		# optional, path to duplicity script
+#    'backup_every' : 7,		# optional, really do a backup every n days only (keep retrying on every invocation until operation is successful)
 #    'remove_older' : 4,		# optional, remove backups older than n days (4 by default, set to 0 to disable)
 #    'tempdir' : '/alternate/tmp',      # optional, alternate temporary storage directory
 #    'duplicity_args' : [ '--s3-use-new-style' ],	# optional, extra arguments to use when calling duplicity (this example in particular may be needed when using S3)
