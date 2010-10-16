@@ -24,7 +24,7 @@
 
 import sys, os, pickle, portalocker, datetime, time, platform, subprocess
 
-class lock:
+class lock( object ):
     def __init__( self, lockfile, lockinfo, debug = True ):
         self.lockfile = lockfile
         self.lockinfo = lockinfo
@@ -116,6 +116,8 @@ class lock:
             os.unlink( self.lockfile )
             self.handle = None
 
+    # don't rely on this - from the python documentation:
+    # "It is not guaranteed that __del__() methods are called for objects that still exist when the interpreter exits."
     def __del__( self ):
         self.release()
 

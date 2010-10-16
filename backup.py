@@ -18,6 +18,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
 
+from contextlib import contextmanager
+
 import sys, commands, os, subprocess, pickle, datetime
 
 import config, lock
@@ -25,11 +27,13 @@ import config, lock
 class Backup( config.ConfigBase ):
     def __init__( self, conf ):
         config.ConfigBase.__init__( self, conf )
-        self.lock = None
 
-    def AcquireLock( self ):
-        self.lock = lock.lock( self.lockfile, 'dupinanny backup' )
-        self.lock.acquire( wait = None, expire = None )
+    @contextmanager
+    def ManageLock( self ):
+        filelock = lock.lock( self.lockfile, 'dupinanny backup' )
+        filelock.acquire( wait = None, expire = None )
+        yield
+        filelock.release()
 
     def Prepare( self ):
         if ( self.dupi.has_key( 'prepare' ) ):
@@ -81,9 +85,9 @@ class Backup( config.ConfigBase ):
             backup_time_file.close()
 
     def Run( self ):
-        self.AcquireLock()
-        self.Prepare()
-        self.ProcessBackups()
+        with self.ManageLock():
+            self.Prepare()
+            self.ProcessBackups()
 
 class CheckMount( object ):
     def __init__( self, directory ):
