@@ -38,7 +38,7 @@ class Backup( config.ConfigBase ):
 
     def ProcessBackups( self ):
         backup_time_filename = os.path.join( os.path.dirname( self.lockfile ), 'dupinnany_backup_info.pickle' )
-        if ( self.config.has_key( 'backup_every' ) and os.path.exists( backup_time_filename ) ):
+        if ( not self.dry_run and self.config.has_key( 'backup_every' ) and os.path.exists( backup_time_filename ) ):
             # check last backup information, early out if we haven't reached that point yet
             backup_time_file = file( backup_time_filename )
             last_backup = pickle.load( backup_time_file )
