@@ -18,6 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
 
+from __future__ import with_statement
 from contextlib import contextmanager
 
 import sys, commands, os, subprocess, pickle, datetime
