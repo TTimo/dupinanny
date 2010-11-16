@@ -68,5 +68,10 @@ DupiConfig['items'].append(
 #from backup import CheckMount
 #DupiConfig['prepare'] = [ CheckMount( '/mnt/backup' ) ]
 
+# adding post-backup steps - write your own class, or use some of the provided utilities
+# for instance, this displays the disk usage
+#from backup import SFTPDiskSpace
+#DupiConfig['posthook'] = [ SFTPDiskSpace('user@server') ]
+
 DupiConfig['config'] = config
 
