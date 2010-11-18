@@ -70,7 +70,17 @@ DupiConfig['items'].append(
 
 # adding post-backup steps - write your own class, or use some of the provided utilities
 # for instance, this displays the disk usage
-#from backup import SFTPDiskSpace
+#class SFTPDiskSpace( object ):
+#    def __init__( self, server ):
+#        self.server = server
+#
+#    def Posthook( self, backup ):
+#        print 'SFTPDiskSpace.Posthook'
+#        cmd = 'echo df -h | sftp "%s"' % self.server
+#        print cmd
+#        p = subprocess.Popen( cmd, stdin = None, shell = True )
+#        p.wait()
+#
 #DupiConfig['posthook'] = [ SFTPDiskSpace('user@server') ]
 
 DupiConfig['config'] = config

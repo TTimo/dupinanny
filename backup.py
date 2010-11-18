@@ -114,17 +114,6 @@ class CheckMount( object ):
             if ( status != 0 ):
                 raise Exception( 'CheckMount: %s is not mounted' % self.directory )
 
-class SFTPDiskSpace( object ):
-    def __init__( self, server ):
-        self.server = server
-
-    def Posthook( self, backup ):
-        print 'SFTPDiskSpace.Posthook'
-        cmd = 'echo df -h | sftp "%s"' % self.server
-        print cmd
-        p = subprocess.Popen( cmd, stdin = None, shell = True )
-        p.wait()
-
 class BackupTarget( object ):
     def __init__( self, root, destination, exclude = [], shortFilenames = False ):
         self.root = root
