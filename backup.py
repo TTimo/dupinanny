@@ -115,17 +115,18 @@ class CheckMount( object ):
                 raise Exception( 'CheckMount: %s is not mounted' % self.directory )
 
 class BackupTarget( object ):
-    def __init__( self, root, destination, exclude = [], shortFilenames = False ):
+    def __init__( self, root, destination, exclude = [], shortFilenames = False , include = [] ):
         self.root = root
         self.destination = destination
         self.exclude = exclude
+        self.include = include
         self.backup = None
         self.shortFilenames = shortFilenames
         self.fullFileFlag = os.path.normpath( '%s.full' % root.replace( '/', '_' ) )
 
     def Setup( self, backup ):
         self.backup = backup
-        print 'BackupTarget.Setup %s' % repr( ( self.root, self.destination, self.exclude ) )
+        print 'BackupTarget.Setup %s' % repr( ( self.root, self.destination, self.exclude, self.include ) )
 
         if ( self.backup.full ):
             subprocess.check_call( [ 'touch', self.fullFileFlag ] )
@@ -149,6 +150,8 @@ class BackupTarget( object ):
         option_string = []
         for e in self.exclude:
             option_string.append( '--exclude=%s' % e )
+        for e in self.include:
+            option_string.append( '--include=%s' % e )
         if ( self.shortFilenames ):
             option_string.append( '--short-filenames' )
         if ( self.backup.config.has_key('duplicity_args') ):

@@ -27,7 +27,7 @@ config = {
 #########################################
 
 # this shows how to breakdown a backup over rsync into multiple independent pieces
-# we also show how to exclude some paths
+# we also show how to exclude some paths, there is also an include option available
 
 destination_root = 'rsync://@my_host::my_backup_path'
 
